@@ -40,7 +40,7 @@ type Root struct {
 	children map[uuid.UUID]Node
 }
 
-// ID returns Root's unique identifier.
+// ID returns Node's unique identifier.
 func (r *Root) ID() uuid.UUID {
 	return r.id
 }
@@ -80,7 +80,7 @@ func (r *Root) Children() []Node {
 	return nodes
 }
 
-// AddChild inserts a child/dependent node to current node.
+// AddChild adds a child/dependent node to current node.
 func (r *Root) AddChild(n Node) error {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()

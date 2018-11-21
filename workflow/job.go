@@ -89,7 +89,7 @@ func (j *Job) Children() []Node {
 	return nodes
 }
 
-// AddChild inserts a child/dependent node to current node.
+// AddChild adds a child/dependent node to current node.
 func (j *Job) AddChild(n Node) error {
 	j.mutex.Lock()
 	defer j.mutex.Unlock()
