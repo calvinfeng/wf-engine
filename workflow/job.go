@@ -126,11 +126,11 @@ func (j *Job) Activate() {
 	for _, dep := range j.parents {
 		go func(id uuid.UUID, mux chan<- Signal, done <-chan Signal) {
 			mux <- <-done
-			logrus.Debugf("job %s's dependency %s is met\n", j.name, id)
 		}(dep.ID(), mux, dep.Done())
 	}
 
 	for sig := range mux {
+		logrus.Debugf("job %s's dependency %s is met\n", j.name, sig.ID)
 		met[sig.ID] = struct{}{}
 
 		if len(met) == len(j.parents) {

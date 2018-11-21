@@ -17,6 +17,22 @@ func init() {
 }
 
 func main() {
-	r := workflow.NewRoot("start of all")
-	fmt.Println(r.ID())
+	R := workflow.NewRoot("Start")
+	A := workflow.NewJob([]workflow.Node{R}, "A")
+	B := workflow.NewJob([]workflow.Node{R}, "B")
+	C := workflow.NewJob([]workflow.Node{A, B}, "C")
+	T := workflow.NewTerminal([]workflow.Node{C}, "End")
+
+	for _, n := range []workflow.Node{R, A, B, C, T} {
+		fmt.Printf("%s -> %s\n", n.Name(), n.ID())
+	}
+
+	fmt.Printf("\n=======================\n\n")
+
+	err := workflow.Run(R)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Graph is completed")
 }
