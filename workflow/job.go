@@ -151,13 +151,17 @@ func (j *Job) Execute() error {
 		return errors.New("must activate a node before execution")
 	}
 
-	logrus.Debugf("job %s has started", j.name)
-	time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond) // Do something
-	logrus.Debugf("job %s has completed", j.name)
+	j.doWork()
 
 	for i := 0; i < len(j.children); i++ {
 		j.done <- Signal{ID: j.id, Pass: true}
 	}
 
 	return nil
+}
+
+func (j *Job) doWork() {
+	logrus.Debugf("job %s has started", j.name)
+	time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
+	logrus.Debugf("job %s has completed", j.name)
 }

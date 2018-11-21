@@ -3,10 +3,8 @@ package workflow
 import (
 	"errors"
 	"sync"
-	"time"
 
 	uuid "github.com/satori/go.uuid"
-	log "github.com/sirupsen/logrus"
 )
 
 // NewRoot returns a Root that satisfies the Node interface.
@@ -114,10 +112,6 @@ func (r *Root) Execute() error {
 	if !r.activated {
 		return errors.New("must activate a node before execution")
 	}
-
-	log.Debugf("started %s", r.name)
-	time.Sleep(100 * time.Millisecond) // Do something
-	log.Debugf("completed %s", r.name)
 
 	for i := 0; i < len(r.children); i++ {
 		r.done <- Signal{ID: r.id, Pass: true}
