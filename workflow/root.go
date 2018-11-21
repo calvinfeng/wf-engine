@@ -2,6 +2,8 @@ package workflow
 
 import (
 	"errors"
+	"sync"
+	"time"
 
 	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
@@ -10,12 +12,14 @@ import (
 // NewRoot returns a Root that satisfies the Node interface.
 func NewRoot(name string) Node {
 	r := &Root{
-		id:       uuid.NewV1(),
-		name:     name,
-		ready:    make(chan Signal, 1),
-		done:     make(chan Signal, MaxNumDep),
-		parents:  make(map[uuid.UUID]Node),
-		children: make(map[uuid.UUID]Node),
+		id:        uuid.NewV1(),
+		name:      name,
+		activated: false,
+		mutex:     &sync.Mutex{},
+		ready:     make(chan Signal, 1),
+		done:      make(chan Signal, MaxNumDep),
+		parents:   make(map[uuid.UUID]Node),
+		children:  make(map[uuid.UUID]Node),
 	}
 
 	return r
@@ -23,12 +27,17 @@ func NewRoot(name string) Node {
 
 // Root implements Node. It serves as the starting point of an execution graph.
 type Root struct {
-	id       uuid.UUID
-	name     string
+	id        uuid.UUID
+	name      string
+	activated bool
+	mutex     *sync.Mutex
+
+	// Means to communicate with other nodes
+	ready chan Signal
+	done  chan Signal
+
 	parents  map[uuid.UUID]Node
 	children map[uuid.UUID]Node
-	ready    chan Signal
-	done     chan Signal
 }
 
 // ID returns Root's unique identifier.
@@ -56,6 +65,11 @@ func (r *Root) Parents() []Node {
 	return make([]Node, 0)
 }
 
+// AddParent adds a dependency to current node.
+func (r *Root) AddParent(n Node) error {
+	return errors.New("root cannot have any parent")
+}
+
 // Children is a getter for a Node's dependents.
 func (r *Root) Children() []Node {
 	nodes := make([]Node, 0, len(r.children))
@@ -67,26 +81,47 @@ func (r *Root) Children() []Node {
 }
 
 // AddChild inserts a child/dependent node to current node.
-func (r *Root) AddChild(child Node) error {
+func (r *Root) AddChild(n Node) error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	if r.activated {
+		return errors.New("node has been locked down, cannot modify its parent/child")
+	}
+
 	if len(r.children) == MaxNumDep {
 		return errors.New("maximum number of children reached")
 	}
 
-	r.children[child.ID()] = child
+	r.children[n.ID()] = n
 	return nil
 }
 
 // Activate turns a node on and actively checks whether dependencies are met.
 func (r *Root) Activate() {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	r.activated = true
 	r.ready <- Signal{ID: r.id, Pass: true}
 }
 
 // Execute performs an action.
 func (r *Root) Execute() error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	if !r.activated {
+		return errors.New("must activate a node before execution")
+	}
+
 	log.Debugf("started %s", r.name)
+	time.Sleep(100 * time.Millisecond) // Do something
+	log.Debugf("completed %s", r.name)
+
 	for i := 0; i < len(r.children); i++ {
 		r.done <- Signal{ID: r.id, Pass: true}
 	}
-	log.Debugf("completed %s", r.name)
+
 	return nil
 }

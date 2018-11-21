@@ -22,6 +22,7 @@ type Node interface {
 	Children() []Node
 
 	AddChild(Node) error
+	AddParent(Node) error
 	Activate()
 	Execute() error
 }
