@@ -39,3 +39,18 @@ func TestMultipleDependency(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestConditionalDependency(t *testing.T) {
+	root := NewRoot("Start")
+	A := NewJob([]Node{root}, "Job A")
+	B := NewJob([]Node{root}, "Job B")
+	C := NewJob([]Node{A, B}, "Job C")
+	D := NewConditional([]Node{C}, "Conditional")
+	NewTerminal([]Node{D}, "End A")
+	NewTerminal([]Node{D}, "End B")
+
+	err := Run(root)
+	if err != nil {
+		t.Error(err)
+	}
+}

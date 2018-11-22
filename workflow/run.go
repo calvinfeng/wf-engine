@@ -14,6 +14,12 @@ func Run(root Node) error {
 	queue.add(root)
 	for len(queue.set) > 0 {
 		node := queue.next()
+
+		if len(node.Children()) == 0 {
+			node.Execute()
+			continue
+		}
+
 		go node.Execute()
 		for _, child := range node.Children() {
 			if queue.has(child) {

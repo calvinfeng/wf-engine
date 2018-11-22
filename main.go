@@ -21,9 +21,11 @@ func main() {
 	A := workflow.NewJob([]workflow.Node{R}, "A")
 	B := workflow.NewJob([]workflow.Node{R}, "B")
 	C := workflow.NewJob([]workflow.Node{A, B}, "C")
-	T := workflow.NewTerminal([]workflow.Node{C}, "End")
+	D := workflow.NewConditional([]workflow.Node{C}, "Conditional")
+	T1 := workflow.NewTerminal([]workflow.Node{D}, "Ending One")
+	T2 := workflow.NewTerminal([]workflow.Node{D}, "Ending Two")
 
-	for _, n := range []workflow.Node{R, A, B, C, T} {
+	for _, n := range []workflow.Node{R, A, B, C, T1, T2} {
 		fmt.Printf("%s -> %s\n", n.Name(), n.ID())
 	}
 
@@ -34,5 +36,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Graph is completed")
+	log.Info("Graph is completed")
 }

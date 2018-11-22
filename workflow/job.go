@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// NewJob returns an Job that satisfies the Node interface.
+// NewJob returns a Job that satisfies the Node interface.
 func NewJob(dependencies []Node, name string) Node {
 	j := &Job{
 		id:        uuid.NewV1(),

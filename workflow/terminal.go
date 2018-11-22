@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	uuid "github.com/satori/go.uuid"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 // NewTerminal returns a Terminal that satisfies the Node interface.
@@ -23,6 +23,7 @@ func NewTerminal(dependencies []Node, name string) Node {
 
 	for _, dep := range dependencies {
 		t.AddParent(dep)
+		dep.AddChild(t)
 	}
 
 	return t
@@ -106,7 +107,7 @@ func (t *Terminal) Activate() {
 	for _, dep := range t.parents {
 		go func(id uuid.UUID, mux chan<- Signal, done <-chan Signal) {
 			mux <- <-done
-			logrus.Debugf("terminal %s's dependency %s is met\n", t.name, id)
+			log.Debugf("terminal %s's dependency %s is met\n", t.name, id)
 		}(dep.ID(), mux, dep.Done())
 	}
 
@@ -114,7 +115,7 @@ func (t *Terminal) Activate() {
 		met[sig.ID] = struct{}{}
 
 		if len(met) == len(t.parents) {
-			logrus.Debugf("terminal %s is emitting ready signal", t.name)
+			log.Debugf("terminal %s is emitting ready signal", t.name)
 			t.activated = true
 			t.ready <- Signal{ID: t.id, Pass: true}
 			return
@@ -130,6 +131,8 @@ func (t *Terminal) Execute() error {
 	if !t.activated {
 		return errors.New("must activate a node before execution")
 	}
+
+	log.Infof("terminal %s is done", t.name)
 
 	t.done <- Signal{ID: t.id, Pass: true}
 
