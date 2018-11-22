@@ -107,7 +107,6 @@ func (t *Terminal) Activate() {
 	for _, dep := range t.parents {
 		go func(id uuid.UUID, mux chan<- Signal, done <-chan Signal) {
 			mux <- <-done
-			log.Debugf("terminal %s's dependency %s is met\n", t.name, id)
 		}(dep.ID(), mux, dep.Done())
 	}
 
@@ -115,7 +114,6 @@ func (t *Terminal) Activate() {
 		met[sig.ID] = struct{}{}
 
 		if len(met) == len(t.parents) {
-			log.Debugf("terminal %s is emitting ready signal", t.name)
 			t.activated = true
 			t.ready <- Signal{ID: t.id, Pass: true}
 			return
@@ -132,7 +130,8 @@ func (t *Terminal) Execute() error {
 		return errors.New("must activate a node before execution")
 	}
 
-	log.Infof("terminal %s is done", t.name)
+	log.Infof("terminal node %s has started", t.name)
+	log.Infof("terminal node %s is done", t.name)
 
 	t.done <- Signal{ID: t.id, Pass: true}
 

@@ -130,11 +130,9 @@ func (j *Job) Activate() {
 	}
 
 	for sig := range mux {
-		logrus.Debugf("job %s's dependency %s is met\n", j.name, sig.ID)
 		met[sig.ID] = struct{}{}
 
 		if len(met) == len(j.parents) {
-			logrus.Debugf("job %s is emitting ready signal", j.name)
 			j.activated = true
 			j.ready <- Signal{ID: j.id, Pass: true}
 			return
@@ -161,7 +159,7 @@ func (j *Job) Execute() error {
 }
 
 func (j *Job) doWork() {
-	logrus.Debugf("job %s has started", j.name)
+	logrus.Infof("job node %s has started", j.name)
 	time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
-	logrus.Debugf("job %s has completed", j.name)
+	logrus.Infof("job node %s is done", j.name)
 }

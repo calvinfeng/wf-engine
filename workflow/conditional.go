@@ -141,11 +141,9 @@ func (c *Conditional) Activate() {
 	}
 
 	for sig := range mux {
-		logrus.Debugf("job %s's dependency %s is met\n", c.name, sig.ID)
 		met[sig.ID] = struct{}{}
 
 		if len(met) == len(c.parents) {
-			logrus.Debugf("job %s is emitting ready signal", c.name)
 			c.activated = true
 			c.ready <- Signal{ID: c.id, Pass: true}
 			return
@@ -161,6 +159,9 @@ func (c *Conditional) Execute() error {
 	if !c.activated {
 		return errors.New("must activate a node before execution")
 	}
+
+	logrus.Infof("conditional node %s has started", c.name)
+	logrus.Infof("conditional node %s is done", c.name)
 
 	// TODO: Don't send done to children that does not satisfy condition.
 	for i := 0; i < len(c.children); i++ {
