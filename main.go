@@ -1,8 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"wf-engine/workflow"
+	"wf-engine/fleet"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -17,24 +16,26 @@ func init() {
 }
 
 func main() {
-	R := workflow.NewRoot("Start")
-	A := workflow.NewJob([]workflow.Node{R}, "A")
-	B := workflow.NewJob([]workflow.Node{R}, "B")
-	C := workflow.NewJob([]workflow.Node{A, B}, "C")
-	D := workflow.NewConditional([]workflow.Node{C}, "Conditional")
-	T1 := workflow.NewTerminal([]workflow.Node{D}, "Ending One")
-	T2 := workflow.NewTerminal([]workflow.Node{D}, "Ending Two")
+	// R := workflow.NewRoot("Start")
+	// A := workflow.NewJob([]workflow.Node{R}, "A")
+	// B := workflow.NewJob([]workflow.Node{R}, "B")
+	// C := workflow.NewJob([]workflow.Node{A, B}, "C")
+	// D := workflow.NewConditional([]workflow.Node{C}, "Conditional")
+	// T1 := workflow.NewTerminal([]workflow.Node{D}, "Ending One")
+	// T2 := workflow.NewTerminal([]workflow.Node{D}, "Ending Two")
 
-	for _, n := range []workflow.Node{R, A, B, C, T1, T2} {
-		fmt.Printf("%s -> %s\n", n.Name(), n.ID())
-	}
+	// for _, n := range []workflow.Node{R, A, B, C, T1, T2} {
+	// 	fmt.Printf("%s -> %s\n", n.Name(), n.ID())
+	// }
 
-	fmt.Printf("\n=======================\n\n")
+	// fmt.Printf("\n=======================\n\n")
 
-	err := workflow.Run(R)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// err := workflow.Run(R)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	log.Info("Graph is completed")
+	// log.Info("Graph is completed")
+
+	fleet.RunServer()
 }
