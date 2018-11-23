@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"wf-engine/fleet"
+	"wf-engine/global"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -37,5 +39,11 @@ func main() {
 
 	// log.Info("Graph is completed")
 
-	fleet.RunServer()
+	ctx := context.Background()
+	go global.State.Activate(ctx)
+
+	log.Info("server is listening on 8000")
+	if err := fleet.RunServer(); err != nil {
+		log.Fatal(err)
+	}
 }

@@ -12,6 +12,7 @@ import (
 // Robot is a robot.
 type Robot struct {
 	Name        string `json:"name"`
+	Status      string `json:"status"`
 	CurrentPose Pose   `json:"current_pose"`
 }
 
@@ -60,16 +61,21 @@ func newSendRobotHandler() http.HandlerFunc {
 			return
 		}
 
-		go func(robot string, current, target Pose) {
-			dX := (target.X - current.X) / 20
-			dY := (target.Y - current.Y) / 20
-			for i := 1; i <= 20; i++ {
-				time.Sleep(1000 * time.Millisecond)
-				store.UpdateRobot(robot, current.X+dX*float64(i), current.Y+dY*float64(i))
-			}
-		}(vars["robot"], robot.CurrentPose, target)
+		go navigate(vars["robot"], robot.CurrentPose, target)
 
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte{})
 	}
+}
+
+func navigate(robot string, current, target Pose) {
+	dX := (target.X - current.X) / 20
+	dY := (target.Y - current.Y) / 20
+	for i := 1; i <= 20; i++ {
+		time.Sleep(1000 * time.Millisecond)
+		newPose := Pose{X: current.X + dX*float64(i), Y: current.Y + dY*float64(i)}
+		store.UpdateRobot(robot, "WORKING", newPose)
+	}
+
+	store.UpdateRobot(robot, "IDLE", target)
 }

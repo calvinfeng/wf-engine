@@ -14,7 +14,11 @@ func init() {
 	}
 
 	for i := 1; i <= 3; i++ {
-		robot := &Robot{Name: fmt.Sprintf("freight%d", i), CurrentPose: Pose{0, 0}}
+		robot := &Robot{
+			Name:        fmt.Sprintf("freight%d", i),
+			Status:      "IDLE",
+			CurrentPose: Pose{0, 0},
+		}
 		store.robots[robot.Name] = robot
 	}
 }
@@ -53,12 +57,12 @@ func (s *Store) GetRobots() []*Robot {
 }
 
 // UpdateRobot modifies x-y coordinate of a robot in store.
-func (s *Store) UpdateRobot(name string, x, y float64) {
+func (s *Store) UpdateRobot(name, status string, pose Pose) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	if _, ok := s.robots[name]; ok {
-		s.robots[name].CurrentPose.X = x
-		s.robots[name].CurrentPose.Y = y
+		s.robots[name].Status = status
+		s.robots[name].CurrentPose = pose
 	}
 }
