@@ -20,9 +20,18 @@ type Node interface {
 	Done() <-chan Signal
 	Parents() []Node
 	Children() []Node
+	IsConditional() bool
 
 	AddChild(Node) error
 	AddParent(Node) error
 	Activate()
 	Execute() error
+}
+
+// Condition represents a conditional statement.
+type Condition func() bool
+
+// TruthyCondition always returns true.
+var TruthyCondition = func() bool {
+	return true
 }

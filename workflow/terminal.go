@@ -97,6 +97,11 @@ func (t *Terminal) AddChild(child Node) error {
 	return errors.New("terminal cannot have any child")
 }
 
+// IsConditional indicates whether a Node is conditional.
+func (t *Terminal) IsConditional() bool {
+	return false
+}
+
 // Activate turns a node on and actively checks whether dependencies are met.
 func (t *Terminal) Activate() {
 	t.mutex.Lock()
@@ -131,7 +136,7 @@ func (t *Terminal) Execute() error {
 	}
 
 	log.Infof("terminal node %s has started", t.name)
-	log.Infof("terminal node %s is done", t.name)
+	log.Infof("terminal node %s has completed", t.name)
 
 	t.done <- Signal{ID: t.id, Pass: true}
 

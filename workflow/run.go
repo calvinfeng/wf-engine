@@ -15,13 +15,13 @@ func Run(root Node) error {
 	for len(queue.set) > 0 {
 		node := queue.next()
 
-		// Execute terminal nodes synchronously.
-		if len(node.Children()) == 0 {
+		// Conditional and Terminal nodes are executed synchronously.
+		if len(node.Children()) == 0 || node.IsConditional() {
 			node.Execute()
-			continue
+		} else {
+			go node.Execute()
 		}
 
-		go node.Execute()
 		for _, child := range node.Children() {
 			if queue.has(child) {
 				continue

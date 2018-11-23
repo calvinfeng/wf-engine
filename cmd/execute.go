@@ -3,7 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"os"
+	"time"
 	"wf-engine/fleet"
 	"wf-engine/global"
 	"wf-engine/workflow"
@@ -22,18 +24,20 @@ func runserver(cmd *cobra.Command, args []string) error {
 }
 
 func runworkflow(cmd *cobra.Command, args []string) error {
+	rand.Seed(time.Now().UnixNano())
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	go global.State.Activate(ctx)
 
-	R := workflow.NewRoot("Start")
-	A := workflow.NewJob([]workflow.Node{R}, "A")
-	B := workflow.NewJob([]workflow.Node{R}, "B")
-	C := workflow.NewJob([]workflow.Node{A, B}, "C")
-	D := workflow.NewConditional([]workflow.Node{C}, "Conditional")
-	T1 := workflow.NewTerminal([]workflow.Node{D}, "Ending One")
-	T2 := workflow.NewTerminal([]workflow.Node{D}, "Ending Two")
+	R := workflow.NewRoot("root")
+	A := workflow.NewJob([]workflow.Node{R}, "sending freight1 to (10, 10)", "freight1")
+	B := workflow.NewJob([]workflow.Node{R}, "sending freight2 to (10, 10)", "freight2")
+	C := workflow.NewJob([]workflow.Node{R}, "sending freight3 to (10, 10)", "freight3")
+	T1 := workflow.NewTerminal([]workflow.Node{A, B, C}, "all robots have started moving")
+	D := workflow.NewConditional([]workflow.Node{A, B, C}, "are all robots at (10, 10)?")
+	T2 := workflow.NewTerminal([]workflow.Node{D}, "all robots have reached (10, 10)")
 
 	for _, n := range []workflow.Node{R, A, B, C, T1, T2} {
 		fmt.Printf("%s -> %s\n", n.Name(), n.ID())
@@ -71,7 +75,7 @@ func Execute() {
 
 	root.AddCommand(server, workflow)
 	if err := root.Execute(); err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 		os.Exit(1)
 	}
 }

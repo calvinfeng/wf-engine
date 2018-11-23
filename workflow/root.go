@@ -78,6 +78,11 @@ func (r *Root) Children() []Node {
 	return nodes
 }
 
+// IsConditional indicates whether a Node is conditional.
+func (r *Root) IsConditional() bool {
+	return false
+}
+
 // AddChild adds a child/dependent node to current node.
 func (r *Root) AddChild(n Node) error {
 	r.mutex.Lock()

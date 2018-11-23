@@ -2,16 +2,15 @@ package workflow
 
 import (
 	"errors"
-	"math/rand"
 	"sync"
-	"time"
+	"wf-engine/fleet"
 
 	uuid "github.com/satori/go.uuid"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 // NewJob returns a Job that satisfies the Node interface.
-func NewJob(dependencies []Node, name string) Node {
+func NewJob(dependencies []Node, name string, device string) Node {
 	j := &Job{
 		id:        uuid.NewV1(),
 		name:      name,
@@ -21,6 +20,7 @@ func NewJob(dependencies []Node, name string) Node {
 		done:      make(chan Signal, MaxNumDep),
 		parents:   make(map[uuid.UUID]Node),
 		children:  make(map[uuid.UUID]Node),
+		device:    device,
 	}
 
 	for _, dep := range dependencies {
@@ -44,6 +44,8 @@ type Job struct {
 
 	parents  map[uuid.UUID]Node
 	children map[uuid.UUID]Node
+
+	device string
 }
 
 // ID returns Node's unique identifier.
@@ -87,6 +89,11 @@ func (j *Job) Children() []Node {
 	}
 
 	return nodes
+}
+
+// IsConditional indicates whether a Node is conditional.
+func (j *Job) IsConditional() bool {
+	return false
 }
 
 // AddChild adds a child/dependent node to current node.
@@ -149,17 +156,27 @@ func (j *Job) Execute() error {
 		return errors.New("must activate a node before execution")
 	}
 
-	j.doWork()
+	log.Infof("job node %s has started", j.name)
+	err := j.doWork()
+	if err != nil {
+		log.Error(err)
+	}
+	log.Infof("job node %s has completed", j.name)
 
 	for i := 0; i < len(j.children); i++ {
-		j.done <- Signal{ID: j.id, Pass: true}
+		j.done <- Signal{ID: j.id, Pass: err == nil}
 	}
 
 	return nil
 }
 
-func (j *Job) doWork() {
-	logrus.Infof("job node %s has started", j.name)
-	time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
-	logrus.Infof("job node %s is done", j.name)
+func (j *Job) doWork() error {
+	robot := requestIDLERobot(j.device)
+	err := httpSendRobotToNewPose(robot.Name, fleet.Pose{X: 10, Y: 10})
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	return nil
 }

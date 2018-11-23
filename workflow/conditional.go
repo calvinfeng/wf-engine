@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 
 	uuid "github.com/satori/go.uuid"
@@ -11,15 +12,15 @@ import (
 // NewConditional returns a Conditional that satisfies the Node interface.
 func NewConditional(dependencies []Node, name string) Node {
 	c := &Conditional{
-		id:         uuid.NewV1(),
-		name:       name,
-		activated:  false,
-		mutex:      &sync.Mutex{},
-		ready:      make(chan Signal, 1),
-		done:       make(chan Signal, MaxNumDep),
-		parents:    make(map[uuid.UUID]Node),
-		children:   make(map[uuid.UUID]Node),
-		conditions: make(map[uuid.UUID]Condition),
+		id:        uuid.NewV1(),
+		name:      name,
+		activated: false,
+		mutex:     &sync.Mutex{},
+		ready:     make(chan Signal, 1),
+		done:      make(chan Signal, MaxNumDep),
+		parents:   make(map[uuid.UUID]Node),
+		children:  make(map[uuid.UUID]Node),
+		cond:      false,
 	}
 
 	for _, dep := range dependencies {
@@ -29,9 +30,6 @@ func NewConditional(dependencies []Node, name string) Node {
 
 	return c
 }
-
-// Condition represents a conditional statement.
-type Condition func() bool
 
 // Conditional implements Node. It will only activate children that satisfy
 // the given condition.
@@ -45,9 +43,10 @@ type Conditional struct {
 	ready chan Signal
 	done  chan Signal
 
-	parents    map[uuid.UUID]Node
-	children   map[uuid.UUID]Node
-	conditions map[uuid.UUID]Condition
+	parents  map[uuid.UUID]Node
+	children map[uuid.UUID]Node
+
+	cond bool
 }
 
 // ID returns Node's unique identifier.
@@ -86,10 +85,14 @@ func (c *Conditional) AddParent(n Node) error {
 // Children is a getter for a Node's dependents.
 func (c *Conditional) Children() []Node {
 	nodes := make([]Node, 0, len(c.children))
+
+	// If condition is not satisfied, return no children.
+	if !c.cond {
+		return nodes
+	}
+
 	for _, n := range c.children {
-		if c.conditions[n.ID()]() {
-			nodes = append(nodes, n)
-		}
+		nodes = append(nodes, n)
 	}
 
 	return nodes
@@ -108,13 +111,14 @@ func (c *Conditional) AddChild(n Node) error {
 		return errors.New("maximum number of children reached")
 	}
 
-	// TODO: Caller should be able to pass in conditions.
 	c.children[n.ID()] = n
-	c.conditions[n.ID()] = func() bool {
-		return true
-	}
 
 	return nil
+}
+
+// IsConditional indicates whether a Node is conditional.
+func (c *Conditional) IsConditional() bool {
+	return true
 }
 
 // Ready returns a channel that emits ready signal.
@@ -161,7 +165,18 @@ func (c *Conditional) Execute() error {
 	}
 
 	logrus.Infof("conditional node %s has started", c.name)
-	logrus.Infof("conditional node %s is done", c.name)
+
+	c.cond = true
+	for i := 1; i <= 3; i++ {
+		name := fmt.Sprintf("freight%d", i)
+		robot := requestIDLERobot(name)
+		if robot.CurrentPose.X != 10 || robot.CurrentPose.Y != 10 {
+			c.cond = false
+			break
+		}
+	}
+
+	logrus.Infof("conditional node %s has completed", c.name)
 
 	// TODO: Don't send done to children that does not satisfy condition.
 	for i := 0; i < len(c.children); i++ {
