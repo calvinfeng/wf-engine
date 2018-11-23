@@ -7,10 +7,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"wf-engine/fleet"
+
+	"github.com/spf13/viper"
 )
 
 func httpFetchRobotList() ([]*fleet.Robot, error) {
-	url := "http://localhost:8000/api/robots/"
+	url := fmt.Sprintf("http://localhost:%d/api/robots/", viper.GetInt("http.port"))
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {

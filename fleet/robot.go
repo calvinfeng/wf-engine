@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/spf13/viper"
 )
 
 // Robot is a robot.
@@ -72,7 +73,7 @@ func navigate(robot string, current, target Pose) {
 	dX := (target.X - current.X) / 20
 	dY := (target.Y - current.Y) / 20
 	for i := 1; i <= 20; i++ {
-		time.Sleep(1000 * time.Millisecond)
+		time.Sleep(viper.GetDuration("robot.update_intv"))
 		newPose := Pose{X: current.X + dX*float64(i), Y: current.Y + dY*float64(i)}
 		store.UpdateRobot(robot, "WORKING", newPose)
 	}

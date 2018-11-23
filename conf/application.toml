@@ -1,0 +1,11 @@
+[http]
+port = 8000
+
+[robot]
+update_intv = "100ms"
+
+[conditional]
+wait_duration = "1s"
+
+[global]
+polling_intv = "500ms"

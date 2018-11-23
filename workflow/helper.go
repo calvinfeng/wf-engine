@@ -8,9 +8,22 @@ import (
 	"time"
 	"wf-engine/fleet"
 	"wf-engine/global"
+
+	"github.com/spf13/viper"
 )
 
 func requestIDLERobot(name string) *fleet.Robot {
+	resp := make(chan *fleet.Robot)
+	global.State.GetRobotByStatus <- global.RobotReqquest{
+		Robot:    name,
+		Status:   "IDLE",
+		Response: resp,
+	}
+
+	return <-resp
+}
+
+func waitForIDLERobot(name string) *fleet.Robot {
 	var robot *fleet.Robot
 	for robot == nil {
 		resp := make(chan *fleet.Robot)
@@ -33,8 +46,8 @@ func httpSendRobotToNewPose(name string, pose fleet.Pose) error {
 		return err
 	}
 
-	endpointf := "http://localhost:8000/api/robots/%s/send/"
-	url := fmt.Sprintf(endpointf, name)
+	endpointf := "http://localhost:%d/api/robots/%s/send/"
+	url := fmt.Sprintf(endpointf, viper.GetInt("http.port"), name)
 	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(data))
 	if err != nil {
 		return err

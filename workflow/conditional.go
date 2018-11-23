@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 // NewConditional returns a Conditional that satisfies the Node interface.
@@ -164,19 +166,29 @@ func (c *Conditional) Execute() error {
 		return errors.New("must activate a node before execution")
 	}
 
-	logrus.Infof("conditional node %s has started", c.name)
+	// Wait a little bit for the global state to poll server, because I didn't use websocket.
+	time.Sleep(viper.GetDuration("conditional.wait_duration"))
 
 	c.cond = true
 	for i := 1; i <= 3; i++ {
 		name := fmt.Sprintf("freight%d", i)
 		robot := requestIDLERobot(name)
+		if robot == nil {
+			c.cond = false
+			break
+		}
+
 		if robot.CurrentPose.X != 10 || robot.CurrentPose.Y != 10 {
 			c.cond = false
 			break
 		}
 	}
 
-	logrus.Infof("conditional node %s has completed", c.name)
+	if c.cond {
+		logrus.Infof("conditional node %s has been satisfied ", c.name)
+	} else {
+		logrus.Infof("conditional node %s has NOT been satisfied ", c.name)
+	}
 
 	// TODO: Don't send done to children that does not satisfy condition.
 	for i := 0; i < len(c.children); i++ {

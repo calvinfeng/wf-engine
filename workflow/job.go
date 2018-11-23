@@ -156,7 +156,6 @@ func (j *Job) Execute() error {
 		return errors.New("must activate a node before execution")
 	}
 
-	log.Infof("job node %s has started", j.name)
 	err := j.doWork()
 	if err != nil {
 		log.Error(err)
@@ -171,7 +170,7 @@ func (j *Job) Execute() error {
 }
 
 func (j *Job) doWork() error {
-	robot := requestIDLERobot(j.device)
+	robot := waitForIDLERobot(j.device)
 	err := httpSendRobotToNewPose(robot.Name, fleet.Pose{X: 10, Y: 10})
 	if err != nil {
 		log.Error(err)

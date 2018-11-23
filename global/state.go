@@ -6,6 +6,7 @@ import (
 	"wf-engine/fleet"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 // State is the global state.
@@ -25,7 +26,7 @@ type state struct {
 	robots           map[string]*fleet.Robot
 }
 
-func (s *state) Activate(ctx context.Context) {
+func (s *state) Activate(ctx context.Context, updateDone chan struct{}) {
 	go s.pollRobots(ctx)
 
 	for {
@@ -36,12 +37,16 @@ func (s *state) Activate(ctx context.Context) {
 			s.handleRobotRequest(req)
 		case update := <-s.update:
 			s.handleUpdate(update)
+			select {
+			case updateDone <- struct{}{}:
+			default:
+			}
 		}
 	}
 }
 
 func (s *state) pollRobots(ctx context.Context) {
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(viper.GetDuration("global.polling_intv"))
 	for {
 		select {
 		case <-ctx.Done():
@@ -56,7 +61,6 @@ func (s *state) pollRobots(ctx context.Context) {
 			done := make(chan struct{})
 			s.update <- stateUpdate{robots: robots, done: done}
 			<-done
-			log.Info("global state is updated")
 		}
 	}
 }

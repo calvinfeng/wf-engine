@@ -135,8 +135,7 @@ func (t *Terminal) Execute() error {
 		return errors.New("must activate a node before execution")
 	}
 
-	log.Infof("terminal node %s has started", t.name)
-	log.Infof("terminal node %s has completed", t.name)
+	log.Infof("terminal node %s is reached", t.name)
 
 	t.done <- Signal{ID: t.id, Pass: true}
 
